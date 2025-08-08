@@ -28,8 +28,8 @@ COPY . .
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Copy emergency routes
-RUN cp routes/emergency.php routes/web.php
+# Ensure we have the latest routes (don't overwrite with emergency routes)
+# Keep the main routes/web.php file as-is
 
 # Create basic .env file with array cache (more reliable for deployment)
 RUN echo "APP_NAME=HomyGo" > .env && \
@@ -70,6 +70,10 @@ RUN echo '#!/bin/bash' > /direct-start.sh && \
     echo 'export DB_USERNAME=${DB_USERNAME}' >> /direct-start.sh && \
     echo 'export DB_PASSWORD=${DB_PASSWORD}' >> /direct-start.sh && \
     echo 'echo "Cache driver: $CACHE_DRIVER"' >> /direct-start.sh && \
+    echo 'echo "Clearing caches..."' >> /direct-start.sh && \
+    echo 'php artisan route:clear 2>/dev/null || true' >> /direct-start.sh && \
+    echo 'php artisan view:clear 2>/dev/null || true' >> /direct-start.sh && \
+    echo 'php artisan config:clear 2>/dev/null || true' >> /direct-start.sh && \
     echo 'if [ "$CACHE_DRIVER" = "database" ]; then' >> /direct-start.sh && \
     echo '  echo "Running database migrations for cache..."' >> /direct-start.sh && \
     echo '  php artisan migrate --force || echo "Migration failed - using array cache"' >> /direct-start.sh && \

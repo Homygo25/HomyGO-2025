@@ -48,11 +48,33 @@ Route::get('/debug/env', function () {
     return response()->json([
         'APP_ENV' => env('APP_ENV'),
         'APP_DEBUG' => env('APP_DEBUG'),
+        'APP_URL' => env('APP_URL'),
         'DB_CONNECTION' => env('DB_CONNECTION'),
         'CACHE_DRIVER' => env('CACHE_DRIVER'),
         'SESSION_DRIVER' => env('SESSION_DRIVER'),
         'PHP_VERSION' => phpversion(),
         'LARAVEL_VERSION' => app()->version(),
+        'MEMORY_LIMIT' => ini_get('memory_limit'),
+        'MAX_EXECUTION_TIME' => ini_get('max_execution_time'),
+    ]);
+});
+
+Route::get('/debug/deployment', function () {
+    $views = [];
+    $viewPath = resource_path('views');
+    if (file_exists($viewPath . '/homepage.blade.php')) {
+        $views['homepage'] = 'exists';
+    }
+    if (file_exists($viewPath . '/welcome-simple.blade.php')) {
+        $views['welcome-simple'] = 'exists';
+    }
+    
+    return response()->json([
+        'deployment_time' => now()->toISOString(),
+        'commit_expected' => '15ba1ff',
+        'views_available' => $views,
+        'current_route' => 'homepage',
+        'route_cache_cleared' => 'needed',
     ]);
 });
 
@@ -63,6 +85,27 @@ Route::get('/debug/health', function () {
         'app_name' => config('app.name'),
         'environment' => app()->environment(),
     ]);
+});
+
+Route::get('/debug/clear-cache', function () {
+    try {
+        // Clear various caches
+        \Artisan::call('route:clear');
+        \Artisan::call('view:clear');
+        \Artisan::call('config:clear');
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'All caches cleared successfully',
+            'cleared' => ['routes', 'views', 'config'],
+            'timestamp' => now()->toISOString(),
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Cache clear failed: ' . $e->getMessage(),
+        ], 500);
+    }
 });
 
 Route::get('/privacy-policy', function () {
