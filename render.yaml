@@ -5,6 +5,7 @@ services:
     repo: https://github.com/Homygo25/HomyGO-2025
     plan: free
     region: oregon
+    runtime: docker
     
     # Use Docker deployment for consistency
     dockerfilePath: ./Dockerfile.direct
