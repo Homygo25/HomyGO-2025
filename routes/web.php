@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
-    return view('welcome-simple');
+    return view('homepage');
 })->name('welcome');
 
 // Health check endpoint for Render
