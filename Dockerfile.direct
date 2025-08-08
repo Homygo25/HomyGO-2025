@@ -31,7 +31,7 @@ RUN composer install --no-dev --optimize-autoloader
 # Copy emergency routes
 RUN cp routes/emergency.php routes/web.php
 
-# Create basic .env file with database connection
+# Create basic .env file with array cache (more reliable for deployment)
 RUN echo "APP_NAME=HomyGo" > .env && \
     echo "APP_ENV=production" >> .env && \
     echo "APP_DEBUG=true" >> .env && \
@@ -39,7 +39,7 @@ RUN echo "APP_NAME=HomyGo" > .env && \
     echo "LOG_CHANNEL=stderr" >> .env && \
     echo "LOG_LEVEL=debug" >> .env && \
     echo "DB_CONNECTION=pgsql" >> .env && \
-    echo "CACHE_DRIVER=database" >> .env && \
+    echo "CACHE_DRIVER=array" >> .env && \
     echo "SESSION_DRIVER=file" >> .env && \
     echo "SESSION_LIFETIME=120" >> .env && \
     echo "QUEUE_CONNECTION=sync" >> .env
@@ -61,14 +61,19 @@ RUN echo '#!/bin/bash' > /direct-start.sh && \
     echo 'echo "=== HOMYGO DIRECT START ==="' >> /direct-start.sh && \
     echo 'echo "Bypassing all entrypoint scripts"' >> /direct-start.sh && \
     echo 'cd /app' >> /direct-start.sh && \
-    echo 'echo "Setting up database environment..."' >> /direct-start.sh && \
+    echo 'echo "Setting up environment..."' >> /direct-start.sh && \
+    echo 'export CACHE_DRIVER=${CACHE_DRIVER:-array}' >> /direct-start.sh && \
     echo 'export DB_HOST=${DB_HOST}' >> /direct-start.sh && \
     echo 'export DB_PORT=${DB_PORT}' >> /direct-start.sh && \
     echo 'export DB_DATABASE=${DB_DATABASE}' >> /direct-start.sh && \
     echo 'export DB_USERNAME=${DB_USERNAME}' >> /direct-start.sh && \
     echo 'export DB_PASSWORD=${DB_PASSWORD}' >> /direct-start.sh && \
-    echo 'echo "Running database migrations..."' >> /direct-start.sh && \
-    echo 'php artisan migrate --force || echo "Migration failed - continuing anyway"' >> /direct-start.sh && \
+    echo 'echo "Cache driver: $CACHE_DRIVER"' >> /direct-start.sh && \
+    echo 'if [ "$CACHE_DRIVER" = "database" ]; then' >> /direct-start.sh && \
+    echo '  echo "Running database migrations for cache..."' >> /direct-start.sh && \
+    echo '  php artisan migrate --force || echo "Migration failed - using array cache"' >> /direct-start.sh && \
+    echo '  export CACHE_DRIVER=array' >> /direct-start.sh && \
+    echo 'fi' >> /direct-start.sh && \
     echo 'echo "Starting PHP server directly on port $PORT"' >> /direct-start.sh && \
     echo 'exec php -S 0.0.0.0:$PORT -t public/' >> /direct-start.sh && \
     chmod +x /direct-start.sh
