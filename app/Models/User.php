@@ -36,6 +36,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'provider',
+        'provider_id',
+        'facebook_id',
+        'google_id',
+        'social_tokens',
+        'avatar_url',
         'phone',
         'date_of_birth',
         'profile_image',
@@ -95,6 +101,7 @@ class User extends Authenticatable
             'risk_score' => 'decimal:2',
             'device_fingerprints' => 'array',
             'security_preferences' => 'array',
+            'social_tokens' => 'array',
         ];
     }
 
