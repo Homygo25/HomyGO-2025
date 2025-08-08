@@ -1,48 +1,36 @@
-# GitLab CI/CD Pipeline for HomyGo - Simple Version
-image: php:8.2-cli
-
-variables:
-  COMPOSER_CACHE_DIR: "$CI_PROJECT_DIR/.composer-cache"
+# GitLab CI/CD Pipeline for HomyGo - Minimal Version
+image: alpine:latest
 
 stages:
-  - build
+  - info
   - deploy
 
-cache:
-  key: composer-cache
-  paths:
-    - .composer-cache/
-    - vendor/
+variables:
+  GIT_DEPTH: 1
 
-before_script:
-  - apt-get update -qq && apt-get install -y -qq git curl unzip libpq-dev
-  - docker-php-ext-install pdo_pgsql
-  - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-build:
-  stage: build
+info:
+  stage: info
   script:
-    - echo "Building HomyGo application..."
-    - composer install --no-dev --optimize-autoloader --no-interaction
-    - cp routes/emergency.php routes/web.php
-    - echo "Build completed successfully!"
-  artifacts:
-    paths:
-      - vendor/
-      - routes/web.php
-    expire_in: 1 hour
+    - echo "HomyGo Repository Information"
+    - echo "=========================="
+    - echo "Repository: https://gitlab.com/homygo25-group/HomyGO-2025.git"
+    - echo "GitHub Mirror: https://github.com/Homygo25/HomyGO-2025.git"
+    - echo "Production URL: https://homygo.info"
+    - echo "Deployment: Render.com Docker"
+    - echo "Status: Ready for deployment"
+    - echo "=========================="
   only:
     - main
 
-deploy_info:
+deploy_instructions:
   stage: deploy
   script:
-    - echo "HomyGo deployment information:"
-    - echo "GitHub Repository: https://github.com/Homygo25/HomyGO-2025.git"
-    - echo "GitLab Repository: https://gitlab.com/homygo25-group/HomyGO-2025.git"
-    - echo "Deployment Target: Render.com (Docker)"
-    - echo "Use Dockerfile.simple for deployment"
-    - echo "Emergency routes configured"
+    - echo "Deployment Instructions:"
+    - echo "1. Use Render.com with Docker environment"
+    - echo "2. Repository: https://github.com/Homygo25/HomyGO-2025.git"
+    - echo "3. Dockerfile: ./Dockerfile.simple"
+    - echo "4. Configure environment variables as documented"
+    - echo "5. Emergency routes are pre-configured"
   environment:
     name: production
     url: https://homygo.info
