@@ -1,41 +1,68 @@
+# HomyGO Laravel Application Configuration for Render
 services:
-  - type: web
-    name: homygo-app
-    env: php
-    plan: starter
-    buildCommand: "./build.sh"
-    startCommand: "./start.sh"
-    envVars:
-      - key: APP_ENV
-        value: production
-      - key: APP_DEBUG
-        value: false
-      - key: APP_KEY
-        generateValue: true
-      - key: APP_URL
-        fromService:
-          type: web
-          name: homygo-app
-          property: host
-      - key: LOG_CHANNEL
-        value: stderr
-      - key: LOG_LEVEL
-        value: error
-      - key: DB_CONNECTION
-        value: sqlite
-      - key: DB_DATABASE
-        value: /opt/render/project/src/database/database.sqlite
-      - key: SESSION_DRIVER
-        value: database
-      - key: SESSION_LIFETIME
-        value: 120
-      - key: CACHE_STORE
-        value: database
-      - key: QUEUE_CONNECTION
-        value: database
-      - key: MAIL_MAILER
-        value: log
-      - key: MAIL_FROM_ADDRESS
-        value: "noreply@homygo.com"
-      - key: MAIL_FROM_NAME
-        value: "HomyGO"
+- type: web
+  name: HomyGO-2025
+  runtime: php
+  repo: https://github.com/Homygo25/HomyGO-2025
+  plan: free
+  region: oregon
+  buildCommand: |
+    # Install PHP dependencies
+    composer install --no-dev --optimize-autoloader --no-interaction
+    
+    # Install Node dependencies and build assets
+    npm ci
+    npm run build
+    
+    # Create necessary directories
+    mkdir -p storage/logs storage/framework/sessions storage/framework/views storage/framework/cache bootstrap/cache
+    
+    # Create SQLite database
+    touch database/database.sqlite
+    chmod 664 database/database.sqlite
+    
+    # Generate app key and cache configs
+    php artisan key:generate --force --no-interaction
+    php artisan config:cache
+    php artisan route:cache
+    php artisan view:cache
+    
+    # Run migrations and seed roles
+    php artisan migrate --force --no-interaction
+    php artisan db:seed --force --no-interaction
+    
+  startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+  autoDeployTrigger: commit
+  envVars:
+  - key: APP_ENV
+    value: production
+  - key: APP_DEBUG
+    value: false
+  - key: APP_KEY
+    generateValue: true
+  - key: APP_URL
+    fromService:
+      type: web
+      name: HomyGO-2025
+      property: host
+  - key: DB_CONNECTION
+    value: sqlite
+  - key: DB_DATABASE
+    value: /opt/render/project/src/database/database.sqlite
+  - key: LOG_CHANNEL
+    value: stderr
+  - key: LOG_LEVEL
+    value: error
+  - key: SESSION_DRIVER
+    value: database
+  - key: CACHE_STORE
+    value: database
+  - key: QUEUE_CONNECTION
+    value: database
+  - key: MAIL_MAILER
+    value: log
+  - key: MAIL_FROM_ADDRESS
+    value: noreply@homygo.com
+  - key: MAIL_FROM_NAME
+    value: HomyGO
+version: "1"
