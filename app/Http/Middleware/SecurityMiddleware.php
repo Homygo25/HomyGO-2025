@@ -493,14 +493,9 @@ class SecurityMiddleware
      */
     protected function logSecurityEvent(string $eventType, Request $request, $user = null, array $additionalData = []): void
     {
-        $this->securityService->logSecurityEvent($eventType, [
+        $this->securityService->logSecurityEvent($eventType, $request, array_merge([
             'user_id' => $user?->id,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'path' => $request->path(),
-            'method' => $request->method(),
-            'additional_data' => $additionalData,
-        ]);
+        ], $additionalData));
     }
 
     /**
