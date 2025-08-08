@@ -119,6 +119,15 @@ Route::get('/terms-of-service', function () {
     return view('terms-of-service');
 })->name('terms-of-service');
 
+// Social Authentication Routes
+Route::get('/auth/{provider}', [App\Http\Controllers\Auth\SocialAuthController::class, 'redirectToProvider'])
+    ->name('auth.social.redirect')
+    ->where('provider', 'facebook|google');
+
+Route::get('/auth/{provider}/callback', [App\Http\Controllers\Auth\SocialAuthController::class, 'handleProviderCallback'])
+    ->name('auth.social.callback')
+    ->where('provider', 'facebook|google');
+
 Route::get('/dashboard', function () {
     $user = Auth::user();
     
