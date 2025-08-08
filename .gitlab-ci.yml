@@ -1,0 +1,59 @@
+# GitLab CI/CD Pipeline for HomyGo
+image: php:8.2
+
+variables:
+  MYSQL_DATABASE: homygo_test
+  MYSQL_ROOT_PASSWORD: root
+  DB_HOST: mysql
+  DB_USERNAME: root
+
+stages:
+  - test
+  - deploy
+
+cache:
+  paths:
+    - vendor/
+
+before_script:
+  - apt-get update -qq && apt-get install -y -qq git curl libmcrypt-dev libjpeg-dev libpng-dev libfreetype6-dev libbz2-dev libpq-dev
+  - docker-php-ext-install pdo_pgsql pgsql
+  - curl -sS https://getcomposer.org/installer | php
+  - php composer.phar install --no-dev --no-scripts
+
+test:
+  stage: test
+  services:
+    - postgres:13
+  variables:
+    POSTGRES_DB: homygo_test
+    POSTGRES_USER: homygo
+    POSTGRES_PASSWORD: secret
+    DB_CONNECTION: pgsql
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_DATABASE: homygo_test
+    DB_USERNAME: homygo
+    DB_PASSWORD: secret
+  script:
+    - cp .env.example .env
+    - php artisan key:generate
+    - php artisan config:clear
+    - php artisan migrate --force
+    - php artisan test
+  only:
+    - main
+    - develop
+
+deploy_production:
+  stage: deploy
+  script:
+    - echo "Deploying to production..."
+    - echo "Use this pipeline for automated deployments"
+    - echo "GitLab repository: https://gitlab.com/homygo25-group/HomyGO-2025.git"
+  environment:
+    name: production
+    url: https://homygo.info
+  only:
+    - main
+  when: manual
