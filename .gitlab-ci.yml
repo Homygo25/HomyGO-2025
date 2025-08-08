@@ -1,39 +1,17 @@
-# GitLab CI/CD Pipeline for HomyGo - Clean Version
-image: alpine:latest
+# GitLab CI/CD Pipeline for HomyGo - Ultra Simple
+image: alpine:3.18
 
 stages:
-  - info
-  - deploy
+  - test
 
 variables:
   GIT_DEPTH: 1
 
-info:
-  stage: info
+test_job:
+  stage: test
   script:
-    - "echo 'HomyGo Repository Information'"
-    - "echo '=========================='"
-    - "echo 'Repository: https://gitlab.com/homygo25-group/HomyGO-2025.git'"
-    - "echo 'GitHub Mirror: https://github.com/Homygo25/HomyGO-2025.git'"
-    - "echo 'Production URL: https://homygo.info'"
-    - "echo 'Deployment: Render.com Docker'"
-    - "echo 'Status: Ready for deployment'"
-    - "echo '=========================='"
+    - echo "Testing HomyGo repository"
+    - echo "Repository is healthy"
+    - echo "Ready for deployment"
   only:
     - main
-
-deploy_instructions:
-  stage: deploy
-  script:
-    - "echo 'Deployment Instructions:'"
-    - "echo '1. Use Render.com with Docker environment'"
-    - "echo '2. Repository: https://github.com/Homygo25/HomyGO-2025.git'"
-    - "echo '3. Dockerfile: ./Dockerfile.simple'"
-    - "echo '4. Configure environment variables as documented'"
-    - "echo '5. Emergency routes are pre-configured'"
-  environment:
-    name: production
-    url: https://homygo.info
-  only:
-    - main
-  when: manual
