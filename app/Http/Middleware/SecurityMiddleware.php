@@ -94,27 +94,34 @@ class SecurityMiddleware
      */
     protected function isRateLimited(Request $request, string $clientIp, $user = null): bool
     {
-        $key = $user ? "rate_limit:user:{$user->id}" : "rate_limit:ip:{$clientIp}";
-        
-        // Different limits for different types of requests
-        $limits = [
-            'login' => ['max' => 50, 'window' => 900], // 50 attempts per 15 minutes (development)
-            'api' => ['max' => 1000, 'window' => 3600], // 1000 requests per hour (development)
-            'booking' => ['max' => 100, 'window' => 600], // 100 bookings per 10 minutes (development)
-            'default' => ['max' => 500, 'window' => 3600], // 500 requests per hour (development)
-        ];
+        // Skip rate limiting if cache is not available
+        try {
+            $key = $user ? "rate_limit:user:{$user->id}" : "rate_limit:ip:{$clientIp}";
+            
+            // Different limits for different types of requests
+            $limits = [
+                'login' => ['max' => 50, 'window' => 900], // 50 attempts per 15 minutes (development)
+                'api' => ['max' => 1000, 'window' => 3600], // 1000 requests per hour (development)
+                'booking' => ['max' => 100, 'window' => 600], // 100 bookings per 10 minutes (development)
+                'default' => ['max' => 500, 'window' => 3600], // 500 requests per hour (development)
+            ];
 
-        $requestType = $this->getRequestType($request);
-        $limit = $limits[$requestType] ?? $limits['default'];
+            $requestType = $this->getRequestType($request);
+            $limit = $limits[$requestType] ?? $limits['default'];
 
-        $current = Cache::get($key, 0);
-        
-        if ($current >= $limit['max']) {
-            return true;
+            $current = Cache::get($key, 0);
+            
+            if ($current >= $limit['max']) {
+                return true;
+            }
+
+            Cache::put($key, $current + 1, $limit['window']);
+            return false;
+        } catch (\Exception $e) {
+            // If cache fails, log the error but don't block the request
+            \Log::warning('Rate limiting cache failed: ' . $e->getMessage());
+            return false; // Allow request to proceed
         }
-
-        Cache::put($key, $current + 1, $limit['window']);
-        return false;
     }
 
     /**

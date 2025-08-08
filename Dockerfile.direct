@@ -63,6 +63,7 @@ RUN echo '#!/bin/bash' > /direct-start.sh && \
     echo 'cd /app' >> /direct-start.sh && \
     echo 'echo "Setting up environment..."' >> /direct-start.sh && \
     echo 'export CACHE_DRIVER=${CACHE_DRIVER:-array}' >> /direct-start.sh && \
+    echo 'export SESSION_DRIVER=${SESSION_DRIVER:-file}' >> /direct-start.sh && \
     echo 'export DB_HOST=${DB_HOST}' >> /direct-start.sh && \
     echo 'export DB_PORT=${DB_PORT}' >> /direct-start.sh && \
     echo 'export DB_DATABASE=${DB_DATABASE}' >> /direct-start.sh && \
