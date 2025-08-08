@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('welcome-simple');
 })->name('welcome');
 
 // Health check endpoint for Render
@@ -23,6 +23,47 @@ Route::get('/health', function () {
         'environment' => app()->environment(),
     ]);
 })->name('health-check');
+
+// Debug routes for troubleshooting deployment
+Route::get('/debug/db', function () {
+    try {
+        DB::connection()->getPdo();
+        $userCount = DB::table('users')->count();
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Database connected successfully!',
+            'user_count' => $userCount,
+            'connection' => env('DB_CONNECTION'),
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Database connection failed: ' . $e->getMessage(),
+            'connection' => env('DB_CONNECTION'),
+        ]);
+    }
+});
+
+Route::get('/debug/env', function () {
+    return response()->json([
+        'APP_ENV' => env('APP_ENV'),
+        'APP_DEBUG' => env('APP_DEBUG'),
+        'DB_CONNECTION' => env('DB_CONNECTION'),
+        'CACHE_DRIVER' => env('CACHE_DRIVER'),
+        'SESSION_DRIVER' => env('SESSION_DRIVER'),
+        'PHP_VERSION' => phpversion(),
+        'LARAVEL_VERSION' => app()->version(),
+    ]);
+});
+
+Route::get('/debug/health', function () {
+    return response()->json([
+        'status' => 'healthy',
+        'timestamp' => now(),
+        'app_name' => config('app.name'),
+        'environment' => app()->environment(),
+    ]);
+});
 
 Route::get('/privacy-policy', function () {
     return view('privacy-policy');

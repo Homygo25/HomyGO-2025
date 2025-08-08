@@ -60,10 +60,6 @@ class User extends Authenticatable
         'risk_score',
         'device_fingerprints',
         'security_preferences',
-        'provider',
-        'provider_id',
-        'provider_token',
-        'avatar',
     ];
 
     /**

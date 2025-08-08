@@ -9,7 +9,6 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
-use App\Http\Controllers\Auth\SocialAuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -57,17 +56,4 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
-    
-    // Social Authentication Routes
-    Route::post('unlink-social', [SocialAuthController::class, 'unlinkAccount'])
-        ->name('auth.unlink-social');
 });
-
-// Social Authentication Routes (accessible to guests and authenticated users)
-Route::get('auth/{provider}', [SocialAuthController::class, 'redirectToProvider'])
-    ->name('auth.social.redirect')
-    ->where('provider', 'facebook|google');
-
-Route::get('auth/{provider}/callback', [SocialAuthController::class, 'handleProviderCallback'])
-    ->name('auth.social.callback')
-    ->where('provider', 'facebook|google');
