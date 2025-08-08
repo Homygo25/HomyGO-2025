@@ -1,70 +1,52 @@
-# HomyGO Laravel Application - Fixed Configuration for Render
+# Exported from Render on 2025-08-08T23:50:47Z
 services:
-  - type: web
-    name: HomyGO-2025
-    repo: https://github.com/Homygo25/HomyGO-2025
-    plan: free
-    region: oregon
-    runtime: docker
-    
-    # Use Docker deployment for consistency
-    dockerfilePath: ./Dockerfile.direct
-    dockerContext: .
-    
-    # Environment variables for production
-    envVars:
-      - key: APP_NAME
-        value: HomyGo
-      - key: APP_ENV
-        value: production
-      - key: APP_DEBUG
-        value: true
-      - key: APP_KEY
-        generateValue: true
-      - key: APP_URL
-        value: https://homygo.info
-      - key: LOG_CHANNEL
-        value: stderr
-      - key: LOG_LEVEL
-        value: debug
-      - key: CACHE_DRIVER
-        value: array
-      - key: SESSION_DRIVER
-        value: file
-      - key: SESSION_LIFETIME
-        value: 120
-      - key: QUEUE_CONNECTION
-        value: sync
-      - key: PORT
-        value: 10000
-      # Database configuration (PostgreSQL)
-      - key: DB_CONNECTION
-        value: pgsql
-      - key: DB_HOST
-        fromDatabase:
-          name: homygo-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: homygo-db
-          property: port
-      - key: DB_DATABASE
-        fromDatabase:
-          name: homygo-db
-          property: database
-      - key: DB_USERNAME
-        fromDatabase:
-          name: homygo-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: homygo-db
-          property: password
-
-# PostgreSQL Database
-databases:
-  - name: homygo-db
-    databaseName: homygo
-    user: homygo_user
-    plan: free
-    region: oregon
+- type: web
+  name: HomyGO-2025
+  runtime: docker
+  repo: https://github.com/Homygo25/HomyGO-2025
+  plan: free
+  envVars:
+  - key: APP_DEBUG
+    sync: false
+  - key: APP_KEY
+    sync: false
+  - key: QUEUE_CONNECTION
+    sync: false
+  - key: SESSION_LIFETIME
+    sync: false
+  - key: SESSION_DRIVER
+    sync: false
+  - key: CACHE_DRIVER
+    sync: false
+  - key: DB_PASSWORD
+    sync: false
+  - key: DB_USERNAME
+    sync: false
+  - key: DB_DATABASE
+    sync: false
+  - key: DB_PORT
+    sync: false
+  - key: DB_HOST
+    sync: false
+  - key: DB_CONNECTION
+    sync: false
+  - key: LOG_LEVEL
+    sync: false
+  - key: LOG_CHANNEL
+    sync: false
+  - key: APP_URL
+    sync: false
+  - key: APP_ENV
+    sync: false
+  - key: APP_NAME
+    sync: false
+  - key: PORT
+    sync: false
+  region: oregon
+  dockerContext: .
+  dockerfilePath: ./Dockerfile.direct
+  domains:
+  - homygo.info
+  - www.homygo.info
+  autoDeployTrigger: commit
+version: "1"
