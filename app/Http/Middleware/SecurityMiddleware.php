@@ -488,7 +488,7 @@ class SecurityMiddleware
         }
     }
 
-    /**
+        /**
      * Log security event
      */
     protected function logSecurityEvent(string $eventType, Request $request, $user = null, array $additionalData = []): void
