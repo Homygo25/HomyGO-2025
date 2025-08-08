@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
+    // Force deployment refresh - commit 581c500
     return view('homepage');
 })->name('welcome');
 
@@ -21,6 +22,8 @@ Route::get('/health', function () {
         'status' => 'ok',
         'timestamp' => now()->toISOString(),
         'environment' => app()->environment(),
+        'commit' => '581c500+',
+        'homepage_route' => 'active',
     ]);
 })->name('health-check');
 
