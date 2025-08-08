@@ -38,8 +38,14 @@ RUN php artisan route:clear || true
 RUN php artisan view:clear || true
 RUN php artisan cache:clear || true
 
+# Create startup script
+RUN echo '#!/bin/bash' > /start.sh && \
+    echo 'echo "Starting HomyGo on port $PORT"' >> /start.sh && \
+    echo 'php -S 0.0.0.0:$PORT -t public/' >> /start.sh && \
+    chmod +x /start.sh
+
 # Expose port
 EXPOSE $PORT
 
 # Start PHP built-in server
-CMD php -S 0.0.0.0:$PORT -t public/
+CMD ["/start.sh"]
