@@ -8,7 +8,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Spatie\Permission\Models\Role;
+use Illuminate\Database\Eloquent\Collection;
 
+/**
+ * @property-read Collection<int, Role> $roles
+ * @property-read Collection<int, Property> $properties
+ * @property-read Collection<int, Booking> $bookings
+ * @method bool hasRole(string|array|\Spatie\Permission\Contracts\Role $roles, string $guard = null)
+ * @method bool hasAnyRole(string|array|\Spatie\Permission\Contracts\Role $roles, string $guard = null)
+ * @method bool hasAllRoles(string|array|\Spatie\Permission\Contracts\Role $roles, string $guard = null)
+ * @method \Illuminate\Database\Eloquent\Relations\BelongsToMany roles()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany properties()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany bookings()
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */

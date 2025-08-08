@@ -15,6 +15,15 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
+// Health check endpoint for Render
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'timestamp' => now()->toISOString(),
+        'environment' => app()->environment(),
+    ]);
+})->name('health-check');
+
 Route::get('/privacy-policy', function () {
     return view('privacy-policy');
 })->name('privacy-policy');
@@ -25,6 +34,12 @@ Route::get('/terms-of-service', function () {
 
 Route::get('/dashboard', function () {
     $user = Auth::user();
+    
+    // Check if user has any roles assigned, if not redirect to profile to set up
+    /** @var \App\Models\User $user */
+    if (!$user->roles()->exists()) {
+        return redirect()->route('profile.edit')->with('warning', 'Please complete your profile setup.');
+    }
     
     if ($user->hasRole('admin')) {
         return redirect()->route('admin.dashboard');
@@ -107,6 +122,7 @@ Route::middleware(['auth', 'role:admin|landlord'])->prefix('owner')->name('owner
         $user = Auth::user();
         
         // Get landlord's properties and statistics
+        /** @var \App\Models\User $user */
         $properties = $user->properties()->get();
         $bookings = \App\Models\Booking::whereIn('property_id', $properties->pluck('id'))->get();
         
