@@ -1,4 +1,4 @@
-# HomyGO Laravel Application Configuration for Render
+# HomyGO Laravel Application - Simplified Configuration for Render
 services:
 - type: web
   name: HomyGO-2025
@@ -6,28 +6,24 @@ services:
   plan: free
   region: oregon
   buildCommand: |
-    # Install PHP dependencies
+    # Install dependencies
     composer install --no-dev --optimize-autoloader --no-interaction
-    
-    # Install Node dependencies and build assets  
     npm ci
     npm run build
     
-    # Create necessary directories
-    mkdir -p storage/logs storage/framework/sessions storage/framework/views storage/framework/cache bootstrap/cache
+    # Setup storage directories
+    mkdir -p storage/framework/{cache,sessions,views}
+    mkdir -p storage/logs
+    mkdir -p bootstrap/cache
     
-    # Create SQLite database with proper permissions
-    touch database/database.sqlite
-    chmod 666 database/database.sqlite
+    # Set permissions
+    chmod -R 775 storage
+    chmod -R 775 bootstrap/cache
     
-    # Generate app key 
-    php artisan key:generate --force --no-interaction
+    # Database setup
+    php artisan migrate --force --no-interaction
     
-    # Don't cache during build - can cause startup issues
-    echo "Build completed - caching will happen at startup"
-    
-  startCommand: |
-    # Debug: Show current working directory and structure
+  startCommand: php artisan serve --host=0.0.0.0 --port=$PORT --no-reload
     echo "Current directory: $(pwd)"
     echo "Directory contents:"
     ls -la
