@@ -121,11 +121,11 @@
                     </p>
                 </div>
                 <div class="mt-8 grid grid-cols-2 gap-4 lg:mt-0">
-                    <a href="{{ route('social.auth', 'facebook') }}" class="flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    <a href="{{ route('auth.social.redirect', 'facebook') }}" class="flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
                         <i class="fab fa-facebook-f mr-2"></i>
                         Facebook
                     </a>
-                    <a href="{{ route('social.auth', 'google') }}" class="flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                    <a href="{{ route('auth.social.redirect', 'google') }}" class="flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
                         <i class="fab fa-google mr-2"></i>
                         Google
                     </a>

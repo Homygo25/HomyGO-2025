@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Models\Property;
 use App\Models\Booking;
 use App\Models\Review;
-use App\Services\RecommendationService;
+use App\Services\AIRecommendationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
@@ -15,7 +15,7 @@ class RecommendationTestController extends Controller
 {
     protected $recommendationService;
 
-    public function __construct(RecommendationService $recommendationService)
+    public function __construct(AIRecommendationService $recommendationService)
     {
         $this->recommendationService = $recommendationService;
     }
