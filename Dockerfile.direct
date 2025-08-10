@@ -62,11 +62,11 @@ RUN echo "Verifying routes..." && \
     fi
 
 # Create basic .env file with array cache (more reliable for deployment)
-# DEPLOYMENT ID: 20250809-FORCE-HOMEPAGE-FIX
+# DEPLOYMENT ID: 20250809-HTTPS-MIXED-CONTENT-FIX
 RUN echo "APP_NAME=HomyGo" > .env && \
     echo "APP_ENV=production" >> .env && \
     echo "APP_DEBUG=true" >> .env && \
-    echo "APP_URL=https://homygo.info" >> .env && \
+    echo "APP_URL=https://www.homygo.info" >> .env && \
     echo "LOG_CHANNEL=stderr" >> .env && \
     echo "LOG_LEVEL=debug" >> .env && \
     echo "DB_CONNECTION=pgsql" >> .env && \

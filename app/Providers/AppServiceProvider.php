@@ -20,8 +20,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Ensure Vite works in production even if manifest is missing
+        // Force HTTPS in production
         if (app()->environment('production')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+            \Illuminate\Support\Facades\URL::forceRootUrl(config('app.url'));
+            
+            // Force secure cookies
+            config([
+                'session.secure' => true,
+                'session.same_site' => 'none'
+            ]);
+            
             Vite::useCspNonce();
             
             // Handle missing manifest gracefully
