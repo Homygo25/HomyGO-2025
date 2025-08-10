@@ -35,12 +35,20 @@ class ForceHttpsMiddleware
      */
     private function shouldForceHttps(Request $request): bool
     {
+        // Never force HTTPS in local development
+        if (app()->environment('local') || 
+            $request->getHost() === 'localhost' || 
+            $request->getHost() === '127.0.0.1' ||
+            str_contains($request->getHost(), '.local')) {
+            return false;
+        }
+
         // Always force in production
         if (app()->environment('production')) {
             return true;
         }
 
-        // Check proxy headers for HTTPS
+        // Check proxy headers for HTTPS (staging environments)
         return $this->isSecureConnection($request);
     }
 

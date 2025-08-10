@@ -20,8 +20,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Force HTTPS in production and handle proxy headers
-        if (app()->environment('production') || $this->isSecureConnection()) {
+        // Force HTTPS in production and handle proxy headers (but not in local development)
+        if ((app()->environment('production') || $this->isSecureConnection()) && 
+            !$this->isLocalDevelopment()) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
             \Illuminate\Support\Facades\URL::forceRootUrl(config('app.url'));
             
@@ -114,5 +115,30 @@ class AppServiceProvider extends ServiceProvider
         }
 
         return false;
+    }
+
+    /**
+     * Check if this is local development environment
+     */
+    private function isLocalDevelopment(): bool
+    {
+        // Check environment
+        if (app()->environment('local')) {
+            return true;
+        }
+
+        // Check common local hosts
+        $host = request()->getHost();
+        $localHosts = ['localhost', '127.0.0.1', '::1'];
+        
+        if (in_array($host, $localHosts) || str_contains($host, '.local')) {
+            return true;
+        }
+
+        // Check for development ports
+        $port = request()->getPort();
+        $devPorts = [8000, 3000, 5173, 8080]; // Common dev server ports
+        
+        return in_array($port, $devPorts);
     }
 }

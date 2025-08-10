@@ -17,9 +17,26 @@
             window.API = {
                 baseUrl: '{{ config('app.url') }}',
                 
-                // Create absolute HTTPS URL from relative path
+                // Check if we're in local development
+                isLocal: function() {
+                    const host = window.location.hostname;
+                    const port = window.location.port;
+                    return host === 'localhost' || 
+                           host === '127.0.0.1' || 
+                           host.includes('.local') ||
+                           ['8000', '3000', '5173', '8080'].includes(port);
+                },
+                
+                // Create appropriate URL (respects local development)
                 url: function(path) {
                     if (path.startsWith('http')) return path;
+                    
+                    // In local development, use current protocol/host
+                    if (this.isLocal()) {
+                        return window.location.origin + (path.startsWith('/') ? path : '/' + path);
+                    }
+                    
+                    // In production, force HTTPS
                     return this.baseUrl + (path.startsWith('/') ? path : '/' + path);
                 },
                 
@@ -38,7 +55,7 @@
                     return { ...headers, ...additionalHeaders };
                 },
                 
-                // Enhanced fetch wrapper that ensures HTTPS
+                // Enhanced fetch wrapper
                 fetch: function(url, options = {}) {
                     return fetch(this.url(url), {
                         headers: this.headers(options.headers || {}),
@@ -47,14 +64,16 @@
                 }
             };
             
-            // Override global fetch to use HTTPS by default
-            const originalFetch = window.fetch;
-            window.fetch = function(url, options = {}) {
-                if (typeof url === 'string' && url.startsWith('/')) {
-                    return originalFetch(window.API.url(url), options);
-                }
-                return originalFetch(url, options);
-            };
+            // Only override global fetch in production environments
+            if (!window.API.isLocal() && '{{ app()->environment() }}' === 'production') {
+                const originalFetch = window.fetch;
+                window.fetch = function(url, options = {}) {
+                    if (typeof url === 'string' && url.startsWith('/')) {
+                        return originalFetch(window.API.url(url), options);
+                    }
+                    return originalFetch(url, options);
+                };
+            }
         </script>
 
         <!-- Scripts -->
