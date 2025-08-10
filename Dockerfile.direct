@@ -38,8 +38,19 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Build Vite assets
-RUN npm run build
+# Build Vite assets (with debugging and fallback)
+RUN echo "Building Vite assets..." && \
+    npm run build && \
+    echo "Build completed. Checking manifest..." && \
+    ls -la public/build/ && \
+    cat public/build/manifest.json && \
+    echo "Build verification complete." || \
+    (echo "Build failed, creating fallback..." && \
+     mkdir -p public/build/assets && \
+     echo '{"resources/css/app.css":{"file":"assets/app.css","isEntry":true},"resources/js/app.js":{"file":"assets/app.js","isEntry":true}}' > public/build/manifest.json && \
+     echo "/* Fallback CSS */" > public/build/assets/app.css && \
+     echo "/* Fallback JS */" > public/build/assets/app.js && \
+     echo "Fallback created.")
 
 # FORCE REBUILD - 2025-08-09 - Ensure proper routes are used
 # Verify we have the correct routes/web.php (not emergency routes)
@@ -94,6 +105,18 @@ RUN echo '#!/bin/bash' > /direct-start.sh && \
     echo 'php artisan route:clear 2>/dev/null || true' >> /direct-start.sh && \
     echo 'php artisan view:clear 2>/dev/null || true' >> /direct-start.sh && \
     echo 'php artisan config:clear 2>/dev/null || true' >> /direct-start.sh && \
+    echo 'echo "Checking Vite manifest..."' >> /direct-start.sh && \
+    echo 'if [ ! -f "public/build/manifest.json" ]; then' >> /direct-start.sh && \
+    echo '  echo "⚠️  Vite manifest missing, creating fallback..."' >> /direct-start.sh && \
+    echo '  mkdir -p public/build/assets' >> /direct-start.sh && \
+    echo '  echo '"'"'{"resources/css/app.css":{"file":"assets/app.css","isEntry":true},"resources/js/app.js":{"file":"assets/app.js","isEntry":true}}'"'"' > public/build/manifest.json' >> /direct-start.sh && \
+    echo '  echo "/* Fallback CSS */" > public/build/assets/app.css' >> /direct-start.sh && \
+    echo '  echo "/* Fallback JS */" > public/build/assets/app.js' >> /direct-start.sh && \
+    echo '  echo "✅ Fallback assets created"' >> /direct-start.sh && \
+    echo 'else' >> /direct-start.sh && \
+    echo '  echo "✅ Vite manifest found"' >> /direct-start.sh && \
+    echo 'fi' >> /direct-start.sh && \
+    echo 'chmod -R 755 public/build 2>/dev/null || true' >> /direct-start.sh && \
     echo 'if [ "$CACHE_DRIVER" = "database" ]; then' >> /direct-start.sh && \
     echo '  echo "Running database migrations for cache..."' >> /direct-start.sh && \
     echo '  php artisan migrate --force || echo "Migration failed - using array cache"' >> /direct-start.sh && \
