@@ -83,7 +83,10 @@ class SecurityMiddleware
         // Process the request
         $response = $next($request);
 
-        // 7. Post-request security checks
+        // 7. Add security headers for HTTPS and mixed content protection
+        $this->addSecurityHeaders($response, $request);
+
+        // 8. Post-request security checks
         $this->performPostRequestChecks($request, $response, $user);
 
         return $response;
@@ -533,5 +536,65 @@ class SecurityMiddleware
         $c = 2 * atan2(sqrt($a), sqrt(1-$a));
         
         return $earthRadius * $c;
+    }
+
+    /**
+     * Add comprehensive security headers for HTTPS and mixed content protection
+     */
+    protected function addSecurityHeaders(Response $response, Request $request): void
+    {
+        // Force HTTPS and prevent mixed content
+        if ($request->isSecure() || config('app.env') === 'production') {
+            // Strict Transport Security - Force HTTPS for 1 year
+            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+            
+            // Content Security Policy - Use configuration
+            if (config('csp.enabled', true)) {
+                $csp = $this->buildCSPHeader();
+                $response->headers->set('Content-Security-Policy', $csp);
+            }
+            
+            // Prevent clickjacking
+            $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
+            
+            // Prevent MIME type sniffing
+            $response->headers->set('X-Content-Type-Options', 'nosniff');
+            
+            // XSS Protection
+            $response->headers->set('X-XSS-Protection', '1; mode=block');
+            
+            // Referrer Policy
+            $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+            
+            // Permissions Policy
+            $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+        }
+    }
+
+    /**
+     * Build Content Security Policy header from configuration
+     */
+    protected function buildCSPHeader(): string
+    {
+        $directives = config('csp.directives', []);
+        $cspParts = [];
+
+        foreach ($directives as $directive => $sources) {
+            if (is_array($sources) && !empty($sources)) {
+                $cspParts[] = $directive . ' ' . implode(' ', $sources);
+            }
+        }
+
+        // Add upgrade-insecure-requests if enabled
+        if (config('csp.upgrade_insecure_requests', true)) {
+            $cspParts[] = 'upgrade-insecure-requests';
+        }
+
+        // Add block-all-mixed-content if enabled
+        if (config('csp.block_all_mixed_content', false)) {
+            $cspParts[] = 'block-all-mixed-content';
+        }
+
+        return implode('; ', $cspParts) . ';';
     }
 }
