@@ -426,15 +426,21 @@ class SecurityService
             'timestamp' => now()
         ], $additionalData);
         
-        SecurityLog::create([
-            'type' => $type,
-            'severity' => $this->getSeverityLevel($type),
-            'data' => $data,
-            'ip_address' => $request->ip(),
-            'user_id' => auth()->id()
-        ]);
+        try {
+            SecurityLog::create([
+                'type' => $type,
+                'severity' => $this->getSeverityLevel($type),
+                'data' => $data,
+                'ip_address' => $request->ip(),
+                'user_id' => auth()->id()
+            ]);
+        } catch (\Exception $e) {
+            // If security_logs table doesn't exist or database error, just log to file
+            // This prevents breaking the application during testing or when security tables aren't migrated
+            Log::warning('Security log database error: ' . $e->getMessage());
+        }
         
-        // Log to file for external monitoring
+        // Log to file for external monitoring (always works)
         Log::channel('security')->warning("Security Event: {$type}", $data);
     }
 

@@ -1,6 +1,6 @@
 FROM php:8.2-cli
 
-# Install system dependencies including netcat
+# Install system dependencies including netcat and Node.js
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -13,6 +13,10 @@ RUN apt-get update && apt-get install -y \
     netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Node.js and npm
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
+
 # Install PHP extensions
 RUN docker-php-ext-install pdo_pgsql pgsql mbstring exif pcntl bcmath gd
 
@@ -22,11 +26,20 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /app
 
+# Copy package.json and package-lock.json first for better caching
+COPY package*.json ./
+
+# Install node dependencies
+RUN npm install
+
 # Copy application files
 COPY . .
 
-# Install dependencies
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
+
+# Build Vite assets
+RUN npm run build
 
 # FORCE REBUILD - 2025-08-09 - Ensure proper routes are used
 # Verify we have the correct routes/web.php (not emergency routes)
