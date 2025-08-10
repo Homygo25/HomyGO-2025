@@ -16,7 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'security' => \App\Http\Middleware\SecurityMiddleware::class,
+            'force.https' => \App\Http\Middleware\ForceHttpsMiddleware::class,
         ]);
+        
+        // Add HTTPS middleware first (highest priority)
+        $middleware->prepend(\App\Http\Middleware\ForceHttpsMiddleware::class);
         
         // Add security middleware to global middleware stack
         $middleware->append(\App\Http\Middleware\SecurityMiddleware::class);

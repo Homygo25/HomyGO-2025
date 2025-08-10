@@ -25,6 +25,9 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\URL::forceScheme('https');
             \Illuminate\Support\Facades\URL::forceRootUrl(config('app.url'));
             
+            // Force asset URLs to use HTTPS
+            $this->app['url']->forceScheme('https');
+            
             // Force secure cookies
             config([
                 'session.secure' => true,

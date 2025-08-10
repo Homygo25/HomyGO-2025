@@ -29,6 +29,52 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        <!-- Global API Helper Script -->
+        <script>
+            // Global API helper functions for HTTPS enforcement
+            window.API = {
+                baseUrl: '{{ config('app.url') }}',
+                
+                // Create absolute HTTPS URL from relative path
+                url: function(path) {
+                    if (path.startsWith('http')) return path;
+                    return this.baseUrl + (path.startsWith('/') ? path : '/' + path);
+                },
+                
+                // Get default headers with CSRF token
+                headers: function(additionalHeaders = {}) {
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    };
+                    
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    if (csrfToken) {
+                        headers['X-CSRF-TOKEN'] = csrfToken;
+                    }
+                    
+                    return { ...headers, ...additionalHeaders };
+                },
+                
+                // Enhanced fetch wrapper that ensures HTTPS
+                fetch: function(url, options = {}) {
+                    return fetch(this.url(url), {
+                        headers: this.headers(options.headers || {}),
+                        ...options
+                    });
+                }
+            };
+            
+            // Override global fetch to use HTTPS by default
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options = {}) {
+                if (typeof url === 'string' && url.startsWith('/')) {
+                    return originalFetch(window.API.url(url), options);
+                }
+                return originalFetch(url, options);
+            };
+        </script>
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>

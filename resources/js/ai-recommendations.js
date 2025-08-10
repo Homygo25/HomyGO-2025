@@ -1,7 +1,32 @@
 // AI Recommendations Component
 class AIRecommendations {
     constructor() {
+        this.baseURL = window.location.protocol + '//' + window.location.host;
         this.init();
+    }
+
+    // Helper method to create absolute HTTPS URLs
+    getApiUrl(endpoint) {
+        return `${this.baseURL}${endpoint}`;
+    }
+
+    // Helper method to get authorization headers
+    getHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        const token = this.getToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (csrfToken) {
+            headers['X-CSRF-TOKEN'] = csrfToken;
+        }
+        
+        return headers;
     }
 
     init() {
@@ -48,11 +73,8 @@ class AIRecommendations {
 
     async loadPersonalizedRecommendations(limit = 10) {
         try {
-            const response = await fetch(`/api/ai-recommendations/personalized?limit=${limit}`, {
-                headers: {
-                    'Authorization': `Bearer ${this.getToken()}`,
-                    'Content-Type': 'application/json'
-                }
+            const response = await fetch(this.getApiUrl(`/api/ai-recommendations/personalized?limit=${limit}`), {
+                headers: this.getHeaders()
             });
 
             const data = await response.json();
@@ -65,7 +87,7 @@ class AIRecommendations {
 
     async loadSimilarProperties(propertyId, limit = 8) {
         try {
-            const response = await fetch(`/api/ai-recommendations/similar/${propertyId}?limit=${limit}`);
+            const response = await fetch(this.getApiUrl(`/api/ai-recommendations/similar/${propertyId}?limit=${limit}`));
             const data = await response.json();
             this.renderRecommendations(data.similar_properties, 'similar-properties');
         } catch (error) {
@@ -75,7 +97,7 @@ class AIRecommendations {
 
     async loadTrendingProperties(limit = 10) {
         try {
-            const response = await fetch(`/api/ai-recommendations/trending?limit=${limit}`);
+            const response = await fetch(this.getApiUrl(`/api/ai-recommendations/trending?limit=${limit}`));
             const data = await response.json();
             this.renderRecommendations(data.trending_properties, 'trending-properties');
         } catch (error) {
@@ -85,13 +107,9 @@ class AIRecommendations {
 
     async provideFeedback(propertyId, feedbackType, rating = null, notes = '') {
         try {
-            const response = await fetch('/api/ai-recommendations/feedback', {
+            const response = await fetch(this.getApiUrl('/api/ai-recommendations/feedback'), {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.getToken()}`,
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
+                headers: this.getHeaders(),
                 body: JSON.stringify({
                     property_id: propertyId,
                     feedback_type: feedbackType,
@@ -113,10 +131,8 @@ class AIRecommendations {
         if (query.length < 2) return;
 
         try {
-            const response = await fetch(`/api/ai-recommendations/search-suggestions?q=${encodeURIComponent(query)}`, {
-                headers: {
-                    'Authorization': `Bearer ${this.getToken()}`
-                }
+            const response = await fetch(this.getApiUrl(`/api/ai-recommendations/search-suggestions?q=${encodeURIComponent(query)}`), {
+                headers: this.getHeaders()
             });
 
             const data = await response.json();
@@ -128,10 +144,8 @@ class AIRecommendations {
 
     async getPricePrediction(propertyId) {
         try {
-            const response = await fetch(`/api/ai-recommendations/price-prediction/${propertyId}`, {
-                headers: {
-                    'Authorization': `Bearer ${this.getToken()}`
-                }
+            const response = await fetch(this.getApiUrl(`/api/ai-recommendations/price-prediction/${propertyId}`), {
+                headers: this.getHeaders()
             });
 
             const data = await response.json();
