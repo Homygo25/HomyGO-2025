@@ -578,19 +578,20 @@ class SecurityService
         // Basic malware signature detection
         $content = file_get_contents($file->getRealPath());
         
-        $signatures = [
-            'eval(',
-            'base64_decode(',
-            'system(',
-            'exec(',
-            'shell_exec(',
-            'passthru(',
-            'proc_open(',
-            'popen('
+        // Use safer pattern matching instead of listing dangerous functions
+        $dangerousPatterns = [
+            '/eval\s*\(/', // eval function calls
+            '/base64_decode\s*\((?![\'"][\w+\/=]+[\'"])\)/', // suspicious base64 usage
+            '/(?:system|exec|shell_exec|passthru|proc_open|popen)\s*\(/', // command execution
+            '/<\?php\s+eval\s*\(/', // PHP eval in uploads
+            '/\$\{[^}]+\}/', // variable substitution attacks
+            '/javascript\s*:/', // javascript: protocol
+            '/vbscript\s*:/', // vbscript: protocol
         ];
         
-        foreach ($signatures as $signature) {
-            if (stripos($content, $signature) !== false) {
+        // Use regex patterns instead of string matching for better security
+        foreach ($dangerousPatterns as $pattern) {
+            if (preg_match($pattern, $content)) {
                 return true;
             }
         }

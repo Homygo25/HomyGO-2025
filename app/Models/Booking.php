@@ -118,7 +118,9 @@ class Booking extends Model
     public static function generateConfirmationCode(): string
     {
         do {
-            $code = 'HMG' . strtoupper(substr(md5(uniqid(rand(), true)), 0, 6));
+            // Use cryptographically secure random instead of weak MD5
+            $randomBytes = random_bytes(4);
+            $code = 'HMG' . strtoupper(bin2hex($randomBytes));
         } while (self::where('confirmation_code', $code)->exists());
         
         return $code;

@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -12,19 +12,20 @@ use Spatie\Permission\Models\Role;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * @property-read Collection<int, Role> $roles
  * @property-read Collection<int, Property> $properties
  * @property-read Collection<int, Booking> $bookings
- * @method bool hasRole(string|array|\Spatie\Permission\Contracts\Role $roles, string $guard = null)
- * @method bool hasAnyRole(string|array|\Spatie\Permission\Contracts\Role $roles, string $guard = null)
- * @method bool hasAllRoles(string|array|\Spatie\Permission\Contracts\Role $roles, string $guard = null)
+ * @property-read Collection<int, Review> $reviewsAsGuest
+ * @property-read Collection<int, Review> $reviewsAsHost
+ * @property-read Collection<int, SavedSearch> $savedSearches
+ * @property-read Collection<int, Transaction> $transactions
+ * @property-read IdentityVerification|null $identityVerification
+ * @method bool hasRole(string|array|Role $roles, string $guard = null)
+ * @method bool hasAnyRole(string|array|Role $roles, string $guard = null)
+ * @method bool hasAllRoles(string|array|Role $roles, string $guard = null)
  * @method \Illuminate\Database\Eloquent\Relations\BelongsToMany roles()
- * @method \Illuminate\Database\Eloquent\Relations\HasMany properties()
- * @method \Illuminate\Database\Eloquent\Relations\HasMany bookings()
  */
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles;
 
     /**
@@ -36,16 +37,11 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'provider',
-        'provider_id',
-        'facebook_id',
-        'google_id',
-        'social_tokens',
-        'avatar_url',
         'phone',
         'date_of_birth',
-        'profile_image',
         'bio',
+        'profile_image',
+        'avatar_url',
         'preferred_language',
         'preferred_currency',
         'timezone',
@@ -53,11 +49,7 @@ class User extends Authenticatable
         'emergency_contact_phone',
         'government_id_type',
         'government_id_number',
-        'government_id_verified_at',
-        'phone_verified_at',
-        'is_host_verified',
         'host_verification_documents',
-        'host_verified_at',
         'recommendation_preferences',
         'mfa_enabled',
         'mfa_secret',
@@ -66,6 +58,9 @@ class User extends Authenticatable
         'risk_score',
         'device_fingerprints',
         'security_preferences',
+        'social_tokens',
+        'provider',
+        'provider_id',
     ];
 
     /**
@@ -76,6 +71,9 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'mfa_secret', // Keep MFA secret hidden
+        'backup_codes', // Keep backup codes hidden
+        'social_tokens', // Keep social tokens hidden
     ];
 
     /**
@@ -87,8 +85,6 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'identity_verified_at' => 'datetime',
-            'is_identity_verified' => 'boolean',
             'password' => 'hashed',
             'date_of_birth' => 'date',
             'government_id_verified_at' => 'datetime',
@@ -102,94 +98,100 @@ class User extends Authenticatable
             'device_fingerprints' => 'array',
             'security_preferences' => 'array',
             'social_tokens' => 'array',
+            'mfa_enabled' => 'boolean', // Ensure mfa_enabled is a boolean
         ];
     }
+    
+    // ... (Relationship methods remain the same) ...
 
-    /**
-     * Get the properties owned by the user
-     */
     public function properties(): HasMany
     {
         return $this->hasMany(Property::class);
     }
 
-    /**
-     * Get the bookings made by the user
-     */
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
     }
 
-    /**
-     * Get the reviews written by this user (as guest)
-     */
     public function reviewsAsGuest(): HasMany
     {
         return $this->hasMany(Review::class, 'guest_id');
     }
 
-    /**
-     * Get the reviews received by this user (as host)
-     */
     public function reviewsAsHost(): HasMany
     {
         return $this->hasMany(Review::class, 'host_id');
     }
 
-    /**
-     * Get the saved searches for this user
-     */
     public function savedSearches(): HasMany
     {
         return $this->hasMany(SavedSearch::class);
     }
 
-    /**
-     * Get the transactions for the user
-     */
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
     }
 
-    /**
-     * Get the identity verification for this user
-     */
-    public function identityVerification()
+    public function identityVerification(): HasOne
     {
         return $this->hasOne(IdentityVerification::class);
     }
+    
+    // --- Custom Methods ---
 
     /**
-     * Check if user has completed identity verification
+     * Check if the user's government ID is verified.
      */
-    public function isIdentityVerified(): bool
+    public function isGovernmentIdVerified(): bool
     {
-        return $this->is_identity_verified === true;
+        return $this->government_id_verified_at !== null;
     }
 
     /**
-     * Check if user has pending identity verification
+     * Check if the user is a verified host.
      */
-    public function hasPendingVerification(): bool
+    public function isHostVerified(): bool
     {
-        return $this->identityVerification && $this->identityVerification->status === 'pending';
+        return $this->host_verified_at !== null;
     }
-
+    
     /**
-     * Get verification status badge
+     * Get the verification status as a string.
      */
-    public function getVerificationStatusBadgeAttribute(): string
+    public function getVerificationStatusAttribute(): string
     {
-        if ($this->is_identity_verified) {
-            return '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Verified</span>';
+        if ($this->isHostVerified()) {
+            return 'host-verified';
+        }
+        
+        if ($this->isGovernmentIdVerified()) {
+            return 'id-verified';
         }
         
         if ($this->hasPendingVerification()) {
-            return '<span class="badge badge-warning"><i class="fas fa-clock"></i> Pending</span>';
+            return 'pending';
         }
         
-        return '<span class="badge badge-secondary"><i class="fas fa-times-circle"></i> Not Verified</span>';
+        return 'not-verified';
+    }
+
+    // --- Accessors for clean data retrieval ---
+
+    /**
+     * Check if user has completed identity verification.
+     */
+    public function getIsIdentityVerifiedAttribute(): bool
+    {
+        return $this->identityVerification && $this->identityVerification->status === 'verified';
+    }
+
+    /**
+     * Check if user has a pending identity verification.
+     */
+    public function getHasPendingVerificationAttribute(): bool
+    {
+        return $this->identityVerification && $this->identityVerification->status === 'pending';
     }
 }

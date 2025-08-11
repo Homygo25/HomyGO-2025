@@ -81,7 +81,7 @@ class AnalyticsService
         $revenueData = Booking::whereIn('property_id', $properties)
             ->where('status', 'completed')
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->selectRaw("DATE_FORMAT(created_at, '{$interval}') as period, SUM(total_price) as revenue, COUNT(*) as bookings")
+            ->selectRaw("DATE_FORMAT(created_at, ?) as period, SUM(total_price) as revenue, COUNT(*) as bookings", [$interval])
             ->groupBy('period')
             ->orderBy('period')
             ->get();
@@ -129,7 +129,7 @@ class AnalyticsService
         $interval = $this->getChartInterval($period);
         $bookingTrends = Booking::whereIn('property_id', $properties)
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->selectRaw("DATE_FORMAT(created_at, '{$interval}') as period, COUNT(*) as count, status")
+            ->selectRaw("DATE_FORMAT(created_at, ?) as period, COUNT(*) as count, status", [$interval])
             ->groupBy('period', 'status')
             ->orderBy('period')
             ->get()

@@ -16,6 +16,16 @@ Route::get('/', function () {
     return view('homepage');
 })->name('welcome');
 
+// Temporary CSRF test route
+Route::get('/csrf-test', function () {
+    return view('csrf-test');
+});
+
+// Test route for register view with proper error bag
+Route::get('/register-test', function () {
+    return view('auth.register');
+});
+
 // Health check endpoint for Render
 Route::get('/health', function () {
     return response()->json([
@@ -128,6 +138,11 @@ Route::get('/auth/{provider}/callback', [App\Http\Controllers\Auth\SocialAuthCon
     ->name('auth.social.callback')
     ->where('provider', 'facebook|google');
 
+// Public property routes (no authentication required)
+Route::get('/properties/search', [PropertyController::class, 'index'])->name('properties.search');
+Route::get('/properties', [PropertyController::class, 'index'])->name('properties.index');
+Route::get('/properties/{property}', [PropertyController::class, 'show'])->name('properties.show');
+
 Route::get('/dashboard', function () {
     $user = Auth::user();
     
@@ -154,8 +169,12 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
-    // Property routes
-    Route::resource('properties', PropertyController::class);
+    // Property routes (authenticated actions only)
+    Route::get('/properties/create', [PropertyController::class, 'create'])->name('properties.create');
+    Route::post('/properties', [PropertyController::class, 'store'])->name('properties.store');
+    Route::get('/properties/{property}/edit', [PropertyController::class, 'edit'])->name('properties.edit');
+    Route::patch('/properties/{property}', [PropertyController::class, 'update'])->name('properties.update');
+    Route::delete('/properties/{property}', [PropertyController::class, 'destroy'])->name('properties.destroy');
     Route::patch('/properties/{property}/toggle-status', [PropertyController::class, 'toggleStatus'])->name('properties.toggle-status');
     Route::post('/properties/{property}/upload-images', [PropertyController::class, 'uploadImages'])->name('properties.upload-images');
     Route::delete('/properties/{property}/images/{image}', [PropertyController::class, 'deleteImage'])->name('properties.delete-image');
@@ -170,7 +189,7 @@ Route::middleware('auth')->group(function () {
     
     // Transaction routes
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
-    Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
+    Route::post('/transactions', [TransactionController::class, 'store'])->middleware('throttle:5,1')->name('transactions.store');
     
     // AI Recommendations
     Route::prefix('ai-recommendations')->group(function () {
@@ -265,10 +284,10 @@ Route::middleware(['auth', 'role:renter'])->prefix('renter')->name('renter.')->g
 
 // Payment routes
 Route::middleware(['auth'])->group(function () {
-    Route::post('/bookings/{booking}/payment-intent', [App\Http\Controllers\PaymentController::class, 'createPaymentIntent'])->name('payment.create-intent');
-    Route::post('/payments/{payment}/confirm', [App\Http\Controllers\PaymentController::class, 'confirmPayment'])->name('payment.confirm');
+    Route::post('/bookings/{booking}/payment-intent', [App\Http\Controllers\PaymentController::class, 'createPaymentIntent'])->middleware('throttle:10,1')->name('payment.create-intent');
+    Route::post('/payments/{payment}/confirm', [App\Http\Controllers\PaymentController::class, 'confirmPayment'])->middleware('throttle:10,1')->name('payment.confirm');
     Route::get('/payments/{payment}', [App\Http\Controllers\PaymentController::class, 'show'])->name('payment.show');
-    Route::post('/payments/{payment}/refund', [App\Http\Controllers\PaymentController::class, 'refund'])->name('payment.refund');
+    Route::post('/payments/{payment}/refund', [App\Http\Controllers\PaymentController::class, 'refund'])->middleware('throttle:5,1')->name('payment.refund');
 });
 
 // Stripe webhook (no auth middleware)
@@ -305,5 +324,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     })->name('admin.recommendation-tests');
     Route::get('/test-recommendations', [App\Http\Controllers\RecommendationTestController::class, 'runTests'])->name('admin.test-recommendations');
 });
+
+// CSP violation reporting endpoint
+Route::post('/csp-report', function () {
+    $report = request()->json()->all();
+    Log::warning('CSP Violation Reported', $report);
+    return response('', 204);
+})->name('csp.report');
 
 require __DIR__.'/auth.php';

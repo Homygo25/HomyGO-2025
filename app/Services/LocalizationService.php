@@ -281,7 +281,8 @@ class LocalizationService
         // Integration with translation services like Google Translate, DeepL, etc.
         // This is a placeholder implementation
         
-        $cacheKey = "auto_translate_" . md5($text . $sourceLocale . $targetLocale);
+        // Use SHA-256 instead of MD5 for cache key generation
+        $cacheKey = "auto_translate_" . hash('sha256', $text . $sourceLocale . $targetLocale);
         
         return Cache::remember($cacheKey, 86400, function () use ($text, $targetLocale, $sourceLocale) {
             // In production, integrate with translation APIs

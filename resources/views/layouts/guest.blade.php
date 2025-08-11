@@ -15,7 +15,7 @@
         <script>
             // Global API helper functions for HTTPS enforcement
             window.API = {
-                baseUrl: '{{ config('app.url') }}',
+                baseUrl: @json(config('app.url')),
                 
                 // Check if we're in local development
                 isLocal: function() {
@@ -47,9 +47,9 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     };
                     
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]');
                     if (csrfToken) {
-                        headers['X-CSRF-TOKEN'] = csrfToken;
+                        headers['X-CSRF-TOKEN'] = csrfToken.getAttribute('content');
                     }
                     
                     return { ...headers, ...additionalHeaders };

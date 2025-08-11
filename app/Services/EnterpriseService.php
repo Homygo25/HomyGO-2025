@@ -550,13 +550,17 @@ class EnterpriseService
     {
         // Remove expired cache entries
         if (Cache::getStore() instanceof \Illuminate\Cache\RedisStore) {
-            Redis::eval("
-                local keys = redis.call('keys', ARGV[1])
-                for i=1,#keys,5000 do
-                    redis.call('del', unpack(keys, i, math.min(i+4999, #keys)))
-                end
-                return #keys
-            ", 0, 'expired:*');
+            // Use safer Redis commands instead of eval
+            $pattern = 'expired:*';
+            $keys = Redis::keys($pattern);
+            
+            if (!empty($keys)) {
+                // Process in chunks to avoid memory issues
+                $chunks = array_chunk($keys, 1000);
+                foreach ($chunks as $chunk) {
+                    Redis::del($chunk);
+                }
+            }
         }
     }
 
